@@ -26,10 +26,22 @@ def process_data():
         'PrgC_90', 'PrgP_90', 'PrgR_90' 
     ]
     
-    df_features = df_filtered[features].copy()
+    # Bayesian Smoothing to pull low-minute players towards the league average
+    # We use the average minutes played as our 'confidence' constant (C)
+    C = df_filtered['Min'].mean() 
+    
+    smoothed_features = []
+    for feat in features:
+        league_mean = df_filtered[feat].mean()
+        smoothed_col = feat + '_smoothed'
+        df_filtered[smoothed_col] = (df_filtered[feat] * df_filtered['Min'] + league_mean * C) / (df_filtered['Min'] + C)
+        smoothed_features.append(smoothed_col)
+    
+    df_features = df_filtered[smoothed_features].copy()
     
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(df_features)
+    # We can name the columns back to the original for consistency in the pipeline
     df_scaled = pd.DataFrame(scaled_data, columns=features)
     
     k_final = 6
@@ -55,8 +67,9 @@ def process_data():
     # Calculate percentiles relative to all outfield players for radar chart (spider map)
     # 0-100 scale for visual comparison
     for feat in features:
-        df_filtered[feat + '_percentile'] = df_filtered[feat].apply(
-            lambda x: stats.percentileofscore(df_filtered[feat], x)
+        smoothed_col = feat + '_smoothed'
+        df_filtered[feat + '_percentile'] = df_filtered[smoothed_col].apply(
+            lambda x: stats.percentileofscore(df_filtered[smoothed_col], x)
         )
 
     # Export specific columns needed for the frontend

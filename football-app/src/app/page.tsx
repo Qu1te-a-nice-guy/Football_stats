@@ -44,6 +44,19 @@ export default function Home() {
   // Cluster Map State
   const [clusterSearch, setClusterSearch] = useState("");
   const [searchedPlayer, setSearchedPlayer] = useState<Player | null>(null);
+  const [activeClusters, setActiveClusters] = useState<number[]>([0, 1, 2, 3, 4, 5]);
+
+  const toggleCluster = (id: number) => {
+    if (activeClusters.length === 6) {
+      setActiveClusters([id]);
+    } else if (activeClusters.includes(id) && activeClusters.length === 1) {
+      setActiveClusters([0, 1, 2, 3, 4, 5]);
+    } else {
+      setActiveClusters(prev => 
+        prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+      );
+    }
+  };
   
   // Player Comparison State
   const [player1, setPlayer1] = useState<Player | null>(null);
@@ -78,6 +91,7 @@ export default function Home() {
 
   // Group data by cluster for scatter plot
   const clusterData = [0, 1, 2, 3, 4, 5].map(clusterId => {
+    if (!activeClusters.includes(clusterId)) return [];
     return data.filter(p => p.Cluster === clusterId);
   });
   
@@ -165,12 +179,23 @@ export default function Home() {
                   </p>
                   
                   <div className="space-y-3">
-                    {profileNames.map((name, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 transition-all hover:bg-slate-800/80 cursor-default">
-                        <div className="w-3 h-3 rounded-full mt-1.5 shadow-[0_0_8px_currentColor]" style={{ backgroundColor: CLUSTER_COLORS[i], color: CLUSTER_COLORS[i] }}></div>
-                        <span className="text-sm font-medium text-slate-200">{name}</span>
-                      </div>
-                    ))}
+                    {profileNames.map((name, i) => {
+                      const isActive = activeClusters.includes(i);
+                      return (
+                        <button 
+                          key={i} 
+                          onClick={() => toggleCluster(i)}
+                          className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-all ${
+                            isActive 
+                              ? 'bg-slate-800/80 border-slate-600 shadow-[0_0_10px_rgba(255,255,255,0.05)]' 
+                              : 'bg-slate-800/30 border-slate-700/30 opacity-40 hover:opacity-80'
+                          }`}
+                        >
+                          <div className={`w-3 h-3 rounded-full mt-1.5 transition-all ${isActive ? 'shadow-[0_0_8px_currentColor]' : ''}`} style={{ backgroundColor: CLUSTER_COLORS[i], color: CLUSTER_COLORS[i] }}></div>
+                          <span className={`text-sm font-medium text-left ${isActive ? 'text-slate-200' : 'text-slate-400'}`}>{name}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
