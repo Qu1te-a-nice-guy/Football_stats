@@ -1,0 +1,231 @@
+K-MEANS CLUSTERING METHODOLOGY
+Premier League Player Profiling (2023/24)
+==========================================
+
+
+OVERVIEW
+--------
+This project uses K-Means clustering to group Premier League outfield players
+into tactical profiles based on their per-90 performance statistics. This
+document explains the original approach, the problems found, and the improved
+methodology applied after analysis.
+
+
+==========================================
+ORIGINAL APPROACH (k=6)
+==========================================
+
+MINIMUM MINUTES FILTER
+  Players with fewer than 500 minutes played were excluded.
+
+FEATURES USED (7 total)
+  - Gls_90     : Goals per 90 minutes
+  - Ast_90     : Assists per 90 minutes
+  - xG_90      : Expected goals per 90 (includes penalties)
+  - xAG_90     : Expected assisted goals per 90
+  - PrgC_90    : Progressive carries per 90
+  - PrgP_90    : Progressive passes per 90
+  - PrgR_90    : Progressive passes received per 90
+
+PREPROCESSING
+  Bayesian smoothing was applied to all per-90 features before scaling.
+  This pulls players with very few minutes towards the league mean,
+  reducing the distortion caused by small sample sizes.
+  StandardScaler was then applied to normalise all features to mean=0, std=1.
+
+PCA
+  After clustering, PCA reduced the 7 features to 2 components for
+  visualisation only. It was not used as input to K-Means.
+
+NUMBER OF CLUSTERS
+  k=6, chosen via the elbow method and silhouette score analysis.
+
+CLUSTER NAMES (assigned after inspecting cluster members)
+  0 - Builders (CB/DM)
+  1 - Elite Creators (Wingers/CAM)
+  2 - Engines (Box-to-Box / Attacking Fullbacks)
+  3 - Pure Finishers (ST/CF)
+  4 - Traditional Defenders
+  5 - Pass Masters (Metronomes)
+
+
+PROBLEMS IDENTIFIED
+-------------------
+After inspecting specific players, several clear misclassifications were found:
+
+  Player              Assigned Cluster       Expected Cluster
+  ------------------  ---------------------  ----------------------
+  Kevin De Bruyne     Pure Finishers         Pass Masters / Creator
+  Dejan Kulusevski    Pure Finishers         Winger / Engine
+  Erling Haaland      Elite Creators         Pure Finisher
+  Darwin Nunez        Elite Creators         Pure Finisher
+  Marcus Rashford     Traditional Defenders  Attacker / Winger
+
+ROOT CAUSES
+
+  1. No position information used
+     The algorithm had no knowledge of player positions. A forward and a
+     defender with similar per-90 numbers could end up in the same cluster.
+     Rashford ended up with defenders because his low progressive passing and
+     low xAG in his poor 2023/24 season made his stats resemble a non-creative
+     player, which is the same statistical fingerprint as many defenders.
+
+  2. xG_90 included penalties
+     Haaland took 8 penalties in 2023/24. His xG_90 of 1.03 was inflated by
+     this. His non-penalty xG (npxG_90) was 0.81, a meaningful difference
+     that distorted his cluster assignment.
+
+  3. No finisher vs. creator distinction
+     The feature set did not directly capture the balance between a player's
+     goal threat and their chance creation. Haaland and Darwin have decent
+     assists/xAG alongside their elite xG, which pulled them toward the
+     "Elite Creators" cluster instead of the finisher cluster.
+
+  4. Small sample noise (De Bruyne: 1,221 minutes)
+     Despite Bayesian smoothing, De Bruyne's per-90 stats were extreme across
+     every single metric due to his injury-shortened season. No cluster was
+     designed for a player who is in the 90th+ percentile of everything
+     simultaneously, so he was placed in the nearest centroid by chance.
+
+  5. Cluster names are post-hoc
+     Names were assigned after inspecting which players appeared in each group.
+     A cluster named "Pure Finishers" describes its typical member, not every
+     member. Players near the mathematical boundary between clusters can fall
+     on the "wrong" side from a human intuition standpoint.
+
+
+==========================================
+IMPROVED APPROACH (k=7)
+==========================================
+
+MINIMUM MINUTES FILTER
+  Raised from 500 to 900 minutes.
+  This reduces the influence of players who appeared very briefly and whose
+  per-90 stats are less representative of their true profile.
+  Dataset reduced from 366 to 312 players.
+
+FEATURES USED (9 total)
+  - Gls_90           : Goals per 90 minutes
+  - Ast_90           : Assists per 90 minutes
+  - npxG_90          : Non-penalty expected goals per 90  [CHANGED]
+  - xAG_90           : Expected assisted goals per 90
+  - PrgC_90          : Progressive carries per 90
+  - PrgP_90          : Progressive passes per 90
+  - PrgR_90          : Progressive passes received per 90
+  - finisher_ratio   : npxG_90 / xAG_90  [NEW]
+  - pos_score        : Numeric encoding of player position  [NEW]
+
+KEY CHANGES EXPLAINED
+
+  npxG_90 replaces xG_90
+    Non-penalty expected goals removes the distortion from penalty kicks.
+    A player who scores many penalties appears more goal-threatening than their
+    open-play output justifies. npxG reflects actual shooting quality better.
+
+  finisher_ratio (npxG_90 / xAG_90)
+    This ratio directly encodes the balance between goal threat and chance
+    creation. A pure finisher has a high ratio (e.g. Haaland: 5.4). A pure
+    playmaker has a low ratio (e.g. De Bruyne: 0.21). This was the single
+    most important missing feature in the original approach.
+
+    Example values:
+      Erling Haaland   : 5.40  (almost exclusively a finisher)
+      Darwin Nunez     : 2.52  (finisher-leaning)
+      Marcus Rashford  : 2.56  (finisher-leaning)
+      Dejan Kulusevski : 0.60  (creator-leaning)
+      Kevin De Bruyne  : 0.21  (almost exclusively a creator)
+
+  pos_score (position encoding)
+    The Pos column from the dataset is converted to a continuous score:
+      FW          = 1.00
+      FW,MF       = 0.75
+      MF,FW       = 0.75
+      MF          = 0.50
+      FW,DF       = 0.50
+      DF,FW       = 0.50
+      DF,MF       = 0.25
+      MF,DF       = 0.25
+      DF          = 0.00
+    After StandardScaler, this feature contributes equally to the others.
+    It anchors clusters to positional groups, preventing a forward from
+    clustering with defenders purely because of similar counting stats.
+
+PREPROCESSING
+  Bayesian smoothing is applied to the 7 per-90 stats and finisher_ratio.
+  The finisher_ratio is computed from the smoothed npxG_90 and xAG_90 values,
+  not the raw ones, so it inherits the small-sample correction.
+  pos_score is not smoothed (it is a fixed categorical value).
+  StandardScaler is then applied to all 9 features.
+
+PCA
+  Recomputed from the new 9-feature space for visualisation.
+  Axis meanings:
+    PC1 - Attacking Activity / Final Third Volume
+    PC2 - Progression and Chance Creation
+
+NUMBER OF CLUSTERS
+  Raised from k=6 to k=7.
+  At k=6, Kevin De Bruyne and Bruno Fernandes both ended up in clusters that
+  did not fully fit them. De Bruyne was placed in "Elite Creators" alongside
+  Salah and Saka, but his statistical distance from that cluster (extreme
+  PrgP, near-zero PrgC) put him visually far from the group on the PCA map.
+  At k=7, a separate cluster formed naturally to capture the rarest player
+  type: elite multi-dimensional attackers who both score and create at the
+  highest level.
+
+CLUSTER NAMES (k=7)
+  0 - Workhorses (DM/Fullbacks)
+  1 - Pass Masters
+  2 - Goal Threats
+  3 - Traditional Defenders
+  4 - Box Strikers
+  5 - Attacking Wingers
+  6 - Elite Creators
+
+OUTCOME: KEY PLAYER PLACEMENTS
+
+  Player              Before               After
+  ------------------  -------------------  --------------------
+  Erling Haaland      Elite Creators       Goal Threats       (fixed)
+  Darwin Nunez        Elite Creators       Goal Threats       (fixed)
+  Kevin De Bruyne     Pure Finishers       Elite Creators     (fixed)
+  Dejan Kulusevski    Pure Finishers       Attacking Wingers  (fixed)
+  Marcus Rashford     Traditional Def.     Box Strikers       (fixed)
+  Mohamed Salah       Elite Creators       Elite Creators     (unchanged, correct)
+  Bukayo Saka         Elite Creators       Elite Creators     (unchanged, correct)
+  Rodri               Pass Masters         Pass Masters       (unchanged, correct)
+  Bruno Fernandes     Pass Masters         Pass Masters       (unchanged, borderline)
+
+NOTE ON BRUNO FERNANDES
+  Bruno Fernandes remained in Pass Masters across both k=6 and k=7.
+  His xAG (0.34) and xG (0.29) are close to the Elite Creators average,
+  which is why the assignment feels wrong at first glance.
+  However, his progressive passing (PrgP_90 = 8.58) is nearly double the
+  Elite Creators average (4.39), and his progressive carries (2.49) are less
+  than half theirs (4.57). Elite Creators are players who dribble and carry
+  the ball into dangerous positions as well as scoring and assisting.
+  Bruno reaches dangerous positions through passing, not carrying, which
+  aligns him statistically with Odegaard, Trent, and Maddison rather than
+  Salah or Saka. At k=7 he remained a boundary case: his nearest statistical
+  neighbours are all Pass Masters.
+
+
+==========================================
+LIMITATIONS
+==========================================
+
+  - The dataset contains only attacking and progression stats. There are no
+    defensive metrics (tackles, interceptions, clearances, aerial duels).
+    This means the "Traditional Defenders" cluster is defined by the absence
+    of attacking output rather than the presence of defensive contribution.
+
+  - K-Means produces hard cluster boundaries in a continuous statistical space.
+    Players near the boundary between two clusters (like Bruno Fernandes) will
+    always be assigned to one side even if they genuinely belong to both.
+
+  - Cluster names are always approximate. They describe the typical member of
+    the cluster, not a rule that applies to every player in it.
+
+  - K-Means assumes roughly spherical clusters of similar size. Tactical
+    player profiles in football do not necessarily satisfy this assumption.
+    Hierarchical or density-based methods (e.g. DBSCAN) could be explored.

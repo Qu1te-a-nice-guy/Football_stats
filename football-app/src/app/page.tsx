@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Head from "next/head";
+import { useState, useEffect } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { Activity, Users, Shield, Zap, Info, ChevronDown } from "lucide-react";
+import { Activity, Users, Shield } from "lucide-react";
 
 // Types
 type Player = {
@@ -26,6 +25,7 @@ type Player = {
   PrgR_90_percentile: number;
 };
 
+
 // Colors for the clusters (using Tailwind/Tailwind colors equivalent)
 const CLUSTER_COLORS = [
   "#3b82f6", // Blue 500
@@ -34,6 +34,7 @@ const CLUSTER_COLORS = [
   "#ef4444", // Red 500
   "#8b5cf6", // Violet 500
   "#ec4899", // Pink 500
+  "#f97316", // Orange 500
 ];
 
 export default function Home() {
@@ -44,13 +45,13 @@ export default function Home() {
   // Cluster Map State
   const [clusterSearch, setClusterSearch] = useState("");
   const [searchedPlayer, setSearchedPlayer] = useState<Player | null>(null);
-  const [activeClusters, setActiveClusters] = useState<number[]>([0, 1, 2, 3, 4, 5]);
+  const [activeClusters, setActiveClusters] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
 
   const toggleCluster = (id: number) => {
-    if (activeClusters.length === 6) {
+    if (activeClusters.length === 7) {
       setActiveClusters([id]);
     } else if (activeClusters.includes(id) && activeClusters.length === 1) {
-      setActiveClusters([0, 1, 2, 3, 4, 5]);
+      setActiveClusters([0, 1, 2, 3, 4, 5, 6]);
     } else {
       setActiveClusters(prev => 
         prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
@@ -90,13 +91,13 @@ export default function Home() {
   }
 
   // Group data by cluster for scatter plot
-  const clusterData = [0, 1, 2, 3, 4, 5].map(clusterId => {
+  const clusterData = [0, 1, 2, 3, 4, 5, 6].map(clusterId => {
     if (!activeClusters.includes(clusterId)) return [];
     return data.filter(p => p.Cluster === clusterId);
   });
   
   // Extract unique profiles mapping properly sorted by cluster ID (0 to 5)
-  const profileNames = [0, 1, 2, 3, 4, 5].map(id => {
+  const profileNames = [0, 1, 2, 3, 4, 5, 6].map(id => {
     const match = data.find(d => d.Cluster === id);
     return match ? match.Perfil_do_Jogador : `Cluster ${id}`;
   });
@@ -174,10 +175,6 @@ export default function Home() {
                     <Activity size={20} className="text-blue-400" />
                     K-Means AI Clusters
                   </h2>
-                  <p className="text-sm text-slate-400 leading-relaxed mb-6">
-                    We used K-Means clustering across 7 advanced per-90 metrics to group outfield players into 6 distinct tactical profiles based on their natural playstyle.
-                  </p>
-                  
                   <div className="space-y-3">
                     {profileNames.map((name, i) => {
                       const isActive = activeClusters.includes(i);
@@ -253,10 +250,10 @@ export default function Home() {
                   </div>
                   
                   <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart margin={{ top: 60, right: 20, bottom: 20, left: 20 }}>
+                    <ScatterChart margin={{ top: 60, right: 20, bottom: 50, left: 60 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-                      <XAxis type="number" dataKey="PCA1" name="PCA1" stroke="#64748b" tick={{fill: '#94a3b8'}} />
-                      <YAxis type="number" dataKey="PCA2" name="PCA2" stroke="#64748b" tick={{fill: '#94a3b8'}} />
+                      <XAxis type="number" dataKey="PCA1" name="PCA1" stroke="#64748b" tick={{fill: '#94a3b8'}} label={{ value: "PC1 — Attacking Activity / Final Third Volume", position: "insideBottom", offset: -10, fill: "#64748b", fontSize: 12 }} />
+                      <YAxis type="number" dataKey="PCA2" name="PCA2" stroke="#64748b" tick={{fill: '#94a3b8'}} label={{ value: "PC2 — Progression & Chance Creation", angle: -90, position: "insideLeft", offset: 10, fill: "#64748b", fontSize: 12 }} />
                       
                       <Tooltip 
                         isAnimationActive={false}
