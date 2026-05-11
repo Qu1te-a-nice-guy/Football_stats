@@ -14,7 +14,7 @@ type Player = {
   Team: string;
   Min: number;
   Cluster: number;
-  Perfil_do_Jogador: string;
+  Player_Profile: string;
   PCA1: number;
   PCA2: number;
   Gls_90: number;
@@ -43,6 +43,7 @@ const CLUSTER_COLORS = [
   "#8b5cf6", // Violet 500
   "#ec4899", // Pink 500
   "#f97316", // Orange 500
+  "#14b8a6", // Teal 500
 ];
 
 // Formation definitions: each position has a label, zone (for data filtering), and coordinates
@@ -262,7 +263,7 @@ export default function Home() {
   // Extract unique profiles mapping properly sorted by cluster ID (0 to 5)
   const profileNames = [0, 1, 2, 3, 4, 5, 6].map(id => {
     const match = data.find(d => d.Cluster === id);
-    return match ? match.Perfil_do_Jogador : `Cluster ${id}`;
+    return match ? match.Player_Profile : `Cluster ${id}`;
   });
 
   // Radar Chart Data formatting
@@ -808,6 +809,54 @@ export default function Home() {
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Player 2</h3>
                     <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)] animate-pulse"></div>
                   </div>
+<<<<<<< HEAD
+=======
+                  
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart margin={{ top: 60, right: 20, bottom: 50, left: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
+                      <XAxis type="number" dataKey="PCA1" name="PCA1" stroke="#64748b" tick={{fill: '#94a3b8'}} label={{ value: "PC1 — Attacking Activity / Final Third Volume", position: "insideBottom", offset: -10, fill: "#64748b", fontSize: 12 }} />
+                      <YAxis type="number" dataKey="PCA2" name="PCA2" stroke="#64748b" tick={{fill: '#94a3b8'}} label={{ value: "PC2 — Progression & Chance Creation", angle: -90, position: "insideLeft", offset: 10, fill: "#64748b", fontSize: 12 }} />
+                      
+                      <Tooltip 
+                        isAnimationActive={false}
+                        cursor={{ strokeDasharray: '3 3', stroke: '#cbd5e1', opacity: 0.2 }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="glass-card p-4 rounded-xl border border-slate-600 shadow-2xl backdrop-blur-xl">
+                                <p className="font-bold text-lg text-white mb-1">{data.Player}</p>
+                                <p className="text-sm text-slate-300 font-medium mb-3">{data.Team} • {data.Pos}</p>
+                                <div className="space-y-1.5">
+                                  <p className="text-xs text-slate-400 flex justify-between gap-4">
+                                    <span>Profile:</span> 
+                                    <span className="font-semibold" style={{color: CLUSTER_COLORS[data.Cluster]}}>{data.Player_Profile}</span>
+                                  </p>
+                                  <div className="h-px w-full bg-slate-700/50 my-1"></div>
+                                  <p className="text-xs text-slate-400 flex justify-between gap-4">
+                                    <span>xG+xAG/90:</span> <span className="text-white">{(data.xG_90 + data.xAG_90).toFixed(2)}</span>
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }} 
+                      />
+                      
+                      {clusterData.map((cData, index) => (
+                        <Scatter 
+                          key={index} 
+                          name={profileNames[index] || `Cluster ${index}`} 
+                          data={cData} 
+                          fill={CLUSTER_COLORS[index]}
+                          fillOpacity={0.8}
+                          stroke={CLUSTER_COLORS[index]}
+                          strokeWidth={1}
+                        />
+                      ))}
+>>>>>>> 93182cd172ab93e27438acf09d196d968b61cd33
 
                   <div className="relative z-10">
                     <input
@@ -904,9 +953,157 @@ export default function Home() {
                 </div>
               </div>
 
+<<<<<<< HEAD
             </motion.div>
           )}
         </AnimatePresence>
+=======
+        {/* --- COMPARE TAB --- */}
+        {activeTab === "compare" && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            
+            {/* Player Search Bars */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* Player 1 Selection */}
+              <div className="glass-card p-6 rounded-2xl border-t border-blue-500/20 relative">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]"></div>
+                  <h3 className="text-sm font-medium text-slate-400 uppercase tracking-widest">Player 1</h3>
+                </div>
+                
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Search Player 1..."
+                    value={search1}
+                    onChange={(e) => setSearch1(e.target.value)}
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                  {search1 && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                      {filteredSearch1.map(p => (
+                        <button 
+                          key={p.Player}
+                          onClick={() => { setPlayer1(p); setSearch1(""); }}
+                          className="w-full text-left px-4 py-3 hover:bg-slate-700 flex justify-between items-center transition-colors"
+                        >
+                          <span className="font-medium">{p.Player}</span>
+                          <span className="text-xs text-slate-400">{p.Team}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {player1 && (
+                  <div className="mt-6 flex flex-col gap-2">
+                    <h2 className="text-3xl font-bold text-white">{player1.Player}</h2>
+                    <p className="text-blue-400 font-medium">{player1.Team} • {player1.Pos}</p>
+                    <div className="mt-2 text-sm text-slate-300 border border-slate-700/50 bg-slate-800/30 rounded-lg p-3">
+                      <span className="block text-xs uppercase text-slate-500 mb-1">AI Profile</span>
+                      <span className="font-semibold" style={{color: CLUSTER_COLORS[player1.Cluster]}}>{player1.Player_Profile}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Player 2 Selection */}
+              <div className="glass-card p-6 rounded-2xl border-t border-emerald-500/20 relative">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-medium text-slate-400 uppercase tracking-widest">Player 2</h3>
+                  <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]"></div>
+                </div>
+                
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Search Player 2..."
+                    value={search2}
+                    onChange={(e) => setSearch2(e.target.value)}
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                  />
+                  {search2 && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                      {filteredSearch2.map(p => (
+                        <button 
+                          key={p.Player}
+                          onClick={() => { setPlayer2(p); setSearch2(""); }}
+                          className="w-full text-left px-4 py-3 hover:bg-slate-700 flex justify-between items-center transition-colors"
+                        >
+                          <span className="font-medium">{p.Player}</span>
+                          <span className="text-xs text-slate-400">{p.Team}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {player2 && (
+                  <div className="mt-6 flex flex-col gap-2 text-right">
+                    <h2 className="text-3xl font-bold text-white">{player2.Player}</h2>
+                    <p className="text-emerald-400 font-medium">{player2.Pos} • {player2.Team}</p>
+                    <div className="mt-2 text-sm text-slate-300 border border-slate-700/50 bg-slate-800/30 rounded-lg p-3 text-left">
+                       <span className="block text-xs uppercase text-slate-500 mb-1 text-right">AI Profile</span>
+                      <span className="font-semibold block text-right" style={{color: CLUSTER_COLORS[player2.Cluster]}}>{player2.Player_Profile}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Radar Chart */}
+            <div className="glass-card rounded-3xl p-6 md:p-10 border-t border-slate-700/50">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">Head to Head Performance</h3>
+                <p className="text-slate-400 mt-2 text-sm">Metrics shown as Percentiles (0-100) relative to all PL outfield players</p>
+              </div>
+
+              <div className="h-[450px] md:h-[550px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                    <PolarGrid stroke="#334155" />
+                    <PolarAngleAxis 
+                      dataKey="subject" 
+                      tick={{ fill: '#94a3b8', fontSize: 13, fontWeight: 500 }} 
+                    />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{fill: '#475569'}} tickCount={6} />
+                    
+                    {player1 && (
+                      <Radar
+                        name={player1.Player}
+                        dataKey="Player1"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        fill="#3b82f6"
+                        fillOpacity={0.4}
+                      />
+                    )}
+                    {player2 && (
+                      <Radar
+                        name={player2.Player}
+                        dataKey="Player2"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        fill="#10b981"
+                        fillOpacity={0.4}
+                      />
+                    )}
+                    <Tooltip 
+                      isAnimationActive={false}
+                      contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.9)', borderColor: '#475569', borderRadius: '12px', color: '#f8fafc' }}
+                      itemStyle={{ fontWeight: 'bold' }}
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+          </div>
+        )}
+>>>>>>> 93182cd172ab93e27438acf09d196d968b61cd33
 
       </main>
     </motion.div>
