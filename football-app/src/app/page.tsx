@@ -13,7 +13,7 @@ type Player = {
   Team: string;
   Min: number;
   Cluster: number;
-  Perfil_do_Jogador: string;
+  Player_Profile: string;
   PCA1: number;
   PCA2: number;
   Gls_90_percentile: number;
@@ -35,6 +35,7 @@ const CLUSTER_COLORS = [
   "#8b5cf6", // Violet 500
   "#ec4899", // Pink 500
   "#f97316", // Orange 500
+  "#14b8a6", // Teal 500
 ];
 
 export default function Home() {
@@ -99,7 +100,7 @@ export default function Home() {
   // Extract unique profiles mapping properly sorted by cluster ID (0 to 5)
   const profileNames = [0, 1, 2, 3, 4, 5, 6].map(id => {
     const match = data.find(d => d.Cluster === id);
-    return match ? match.Perfil_do_Jogador : `Cluster ${id}`;
+    return match ? match.Player_Profile : `Cluster ${id}`;
   });
 
   // Radar Chart Data formatting
@@ -268,7 +269,7 @@ export default function Home() {
                                 <div className="space-y-1.5">
                                   <p className="text-xs text-slate-400 flex justify-between gap-4">
                                     <span>Profile:</span> 
-                                    <span className="font-semibold" style={{color: CLUSTER_COLORS[data.Cluster]}}>{data.Perfil_do_Jogador}</span>
+                                    <span className="font-semibold" style={{color: CLUSTER_COLORS[data.Cluster]}}>{data.Player_Profile}</span>
                                   </p>
                                   <div className="h-px w-full bg-slate-700/50 my-1"></div>
                                   <p className="text-xs text-slate-400 flex justify-between gap-4">
@@ -360,7 +361,7 @@ export default function Home() {
                     <p className="text-blue-400 font-medium">{player1.Team} • {player1.Pos}</p>
                     <div className="mt-2 text-sm text-slate-300 border border-slate-700/50 bg-slate-800/30 rounded-lg p-3">
                       <span className="block text-xs uppercase text-slate-500 mb-1">AI Profile</span>
-                      <span className="font-semibold" style={{color: CLUSTER_COLORS[player1.Cluster]}}>{player1.Perfil_do_Jogador}</span>
+                      <span className="font-semibold" style={{color: CLUSTER_COLORS[player1.Cluster]}}>{player1.Player_Profile}</span>
                     </div>
                   </div>
                 )}
@@ -403,7 +404,7 @@ export default function Home() {
                     <p className="text-emerald-400 font-medium">{player2.Pos} • {player2.Team}</p>
                     <div className="mt-2 text-sm text-slate-300 border border-slate-700/50 bg-slate-800/30 rounded-lg p-3 text-left">
                        <span className="block text-xs uppercase text-slate-500 mb-1 text-right">AI Profile</span>
-                      <span className="font-semibold block text-right" style={{color: CLUSTER_COLORS[player2.Cluster]}}>{player2.Perfil_do_Jogador}</span>
+                      <span className="font-semibold block text-right" style={{color: CLUSTER_COLORS[player2.Cluster]}}>{player2.Player_Profile}</span>
                     </div>
                   </div>
                 )}
