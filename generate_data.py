@@ -6,11 +6,9 @@ from sklearn.decomposition import PCA
 import scipy.stats as stats
 
 POS_SCORE = {
-    'FW': 1.0,
-    'FW,MF': 0.75, 'MF,FW': 0.75,
+    'FW': 1.0, 'FW,MF': 0.75, 'MF,FW': 0.75,
     'MF': 0.5,  'FW,DF': 0.5, 'DF,FW': 0.5,
-    'DF,MF': 0.25, 'MF,DF': 0.25,
-    'DF': 0.0,
+    'DF,MF': 0.25, 'MF,DF': 0.25, 'DF': 0.0,
 }
 
 def process_data():

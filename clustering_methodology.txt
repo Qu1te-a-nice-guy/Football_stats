@@ -209,6 +209,14 @@ NOTE ON BRUNO FERNANDES
   Salah or Saka. At k=7 he remained a boundary case: his nearest statistical
   neighbours are all Pass Masters.
 
+NOTES ON OTHER PLAYERS
+  Jeremy Doku - Doku is an edge case on the Attacking Wingers. his high progression
+  and goal threat are slightly different from the cluster’s core making him stand out.
+  Erling Haaland - Haaland really stands out, not because he is not well-clustered, but 
+  because he is extremely good.
+  Kevin De Bruyne - De Bruyne is an extremely good Elite Creator. His volume of 
+  progressive passing and creative output makes him far from the other points.
+
 
 ==========================================
 LIMITATIONS
